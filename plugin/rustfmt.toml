@@ -1,0 +1,18 @@
+max_width = 100
+tab_spaces = 4
+hard_tabs = false
+newline_style = "Unix"
+reorder_imports = true
+reorder_modules = true
+wrap_comments = true
+comment_width = 80
+
+# small code block wrap style
+# max: wrap if the code block is longer than max_width
+use_small_heuristics = "Max"
+
+# group imports by crate
+imports_granularity = "Crate"
+
+# group imports by std, external crate, and local crate
+group_imports = "StdExternalCrate"
