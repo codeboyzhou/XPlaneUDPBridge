@@ -5,6 +5,10 @@ echo -------------------------------------------------
 echo           Building Rust X-Plane Plugin
 echo -------------------------------------------------
 
+echo Cleaning previous build...
+cargo clean
+echo Cleaning completed successfully.
+
 :: Load .env file (first line)
 if not exist .env (
     echo ERROR: .env file not found.
@@ -54,9 +58,9 @@ if not exist "%DEST%" (
 echo Copying %SRC% to %DEST%\win.xpl
 copy /Y "%SRC%" "%DEST%\win.xpl"
 if %ERRORLEVEL% NEQ 0 (
-    echo ERROR: Copy failed with error code %ERRORLEVEL%
+    echo ERROR: Copy failed with error code %ERRORLEVEL%.
     exit /b %ERRORLEVEL%
 )
 
-echo Build completed successfully
+echo Build completed successfully.
 endlocal
