@@ -1,8 +1,10 @@
 use std::os::raw::c_int;
 
-pub(crate) const STARTED: c_int = 1;
-
 pub(crate) const XPLANE_C_CHAR_BUFFER_SIZE: usize = 256;
+
+pub(crate) const UDP_SERVER_PORT: u16 = 49000;
+
+pub(crate) const STARTED: c_int = 1;
 
 pub(crate) const NAME: &str = "xplane-udp-bridge";
 

@@ -29,6 +29,7 @@ mod tests {
     use crate::safe;
     use std::ffi::{CStr, CString};
     use std::os::raw::c_char;
+    use std::panic::catch_unwind;
 
     #[test]
     fn test_write_c_char() {
@@ -48,7 +49,7 @@ mod tests {
     #[test]
     fn test_write_c_char_with_null_ptr() {
         let r_str = CString::new("hello").unwrap();
-        let result = std::panic::catch_unwind(|| safe::write_c_char(std::ptr::null_mut(), &r_str));
+        let result = catch_unwind(|| safe::write_c_char(std::ptr::null_mut(), &r_str));
         assert!(result.is_ok(), "test failed: write_c_char should not panic when c_buffer is null");
     }
 
