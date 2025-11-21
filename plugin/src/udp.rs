@@ -53,7 +53,8 @@ impl UdpServer {
             info!("udp server listening on {} with blocking mode", addr);
             match socket.recv_from(&mut buffer) {
                 Ok((size, src)) => {
-                    info!("udp server received {} bytes from {}: {:?}", size, src, &buffer[..size]);
+                    let data = std::str::from_utf8(&buffer[..size]).unwrap();
+                    info!("udp server received {} bytes from {}: {}", size, src, data);
                 }
                 Err(ref e) if e.kind() == WouldBlock || e.kind() == TimedOut => {
                     // no data received, just continue to wait for next read

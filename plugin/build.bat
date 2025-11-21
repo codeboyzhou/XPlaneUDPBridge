@@ -36,7 +36,7 @@ if %ERRORLEVEL% NEQ 0 (
     exit /b %ERRORLEVEL%
 )
 
-set SRC=target\release\plugin.dll
+set SRC=target\release\xplane_udp_bridge_plugin.dll
 set DEST=%XPLANE_PLUGIN_DIR%\xplane-udp-bridge\64
 
 if not exist "%SRC%" (

@@ -2,7 +2,7 @@ use crate::plugin;
 use chrono::Local;
 use std::fs::OpenOptions;
 use std::sync::Once;
-use tracing::info;
+use tracing::{info, Level};
 use tracing_subscriber::fmt::format::Writer;
 use tracing_subscriber::fmt::time::FormatTime;
 use tracing_subscriber::fmt::writer::BoxMakeWriter;
@@ -30,7 +30,7 @@ pub fn init() {
             .with_thread_ids(true)
             .with_thread_names(true)
             .with_line_number(true)
-            .with_max_level(tracing::Level::INFO)
+            .with_max_level(Level::INFO)
             .init();
         info!("logger initialized");
     });
