@@ -1,11 +1,16 @@
+mod datarefs;
+
 use std::io;
-use std::io::{ErrorKind, Write};
+use std::io::ErrorKind;
 use std::net::UdpSocket;
 use std::time::Duration;
 
 /// UDP Client for XPlane UDP bridge plugin.
 struct UdpClient {
+    // Server address (e.g., "127.0.0.1:49000")
     server_addr: String,
+
+    // UDP socket for communication with server
     socket: UdpSocket,
 }
 
@@ -15,30 +20,27 @@ impl UdpClient {
     /// Args:
     ///     host: server IP (e.g., "127.0.0.1")
     ///     port: server port (e.g., 49000)
-    ///     timeout: socket timeout seconds (e.g., 3.0)
+    ///     timeout_secs: socket timeout seconds (e.g., 3.0)
     ///
     /// Returns:
     ///     UdpClient instance or error on failure
-    fn new(host: &str, port: u16, timeout: f64) -> io::Result<Self> {
+    fn new(host: &str, port: u16, timeout_secs: f64) -> io::Result<Self> {
         println!(
-            "🔌 connecting to {}:{} with timeout {} seconds",
-            host, port, timeout
+            "🔌 Creating UDP client to server {}:{} with timeout {} seconds",
+            host, port, timeout_secs
         );
 
         let server_addr = format!("{}:{}", host, port);
 
-        // Bind to local random port
+        // Bind to local random port for client socket
         let socket = UdpSocket::bind("0.0.0.0:0")?;
 
         // Set socket read timeout
-        socket.set_read_timeout(Some(Duration::from_secs_f64(timeout)))?;
+        socket.set_read_timeout(Some(Duration::from_secs_f64(timeout_secs)))?;
 
-        println!("✅ connected successfully via UDP protocol");
+        println!("✅ UDP client created successfully and bound to {}", socket.local_addr()?);
 
-        Ok(Self {
-            server_addr,
-            socket,
-        })
+        Ok(Self { server_addr, socket })
     }
 
     /// Send bytes and wait for response.
@@ -51,16 +53,16 @@ impl UdpClient {
     ///     None on timeout or any error
     fn send_and_recv(&self, data: &[u8]) -> Option<Vec<u8>> {
         // Send data
-        if let Err(e) = self.socket.send_to(data, &self.server_addr) {
-            eprintln!("❌ UDP error while sending: {}", e);
-            return None;
+        match self.socket.send_to(data, &self.server_addr) {
+            Ok(_) => println!("✅ UDP data sent successfully, waiting for response..."),
+            Err(e) => eprintln!("❌ UDP error while sending: {}", e),
         }
 
-        let mut buf = [0u8; 2048];
+        let mut buffer = [0u8; 2048];
 
         // Wait for UDP response
-        match self.socket.recv_from(&mut buf) {
-            Ok((size, _src)) => Some(buf[..size].to_vec()),
+        match self.socket.recv_from(&mut buffer) {
+            Ok((size, _src)) => Some(buffer[..size].to_vec()),
             Err(ref e) if e.kind() == ErrorKind::TimedOut => {
                 let timeout = self.socket.read_timeout().unwrap().unwrap().as_secs_f64();
                 println!("⏱ UDP request timed out after {} seconds", timeout);
@@ -72,42 +74,23 @@ impl UdpClient {
             }
         }
     }
-
-    /// Close the socket.
-    ///
-    /// (Dropping the socket automatically closes it)
-    fn close(self) {
-        println!("UDP client closed");
-    }
 }
 
 fn main() {
     // Create UDP client
     let client = UdpClient::new("127.0.0.1", 49000, 3.0).expect("Failed to create UDP client");
 
-    // Send 5 test messages to server
-    for i in 0..5 {
-        let msg = format!("hello message {}", i);
+    loop {
+        // Create datarefs handler
+        let datarefs_reader = datarefs::Reader::new(&client);
 
-        println!("➡️ sending message {}: {}", i, msg);
-
-        let resp = client.send_and_recv(msg.as_bytes());
-
-        // Print result
-        match resp {
-            Some(r) => println!("⬅️ received message {}: {:?}", i, r),
-            None => println!("⚠️ no response from server for message {}", i),
+        // Read dataref value examples
+        match datarefs_reader.read_as_float("sim/cockpit2/controls/parking_brake_ratio") {
+            Ok(value) => println!("⬅️ received dataref value: {}", value),
+            Err(err_msg) => eprintln!("Error reading dataref: {}", err_msg),
         }
 
-        // sleep for 1 second between requests to avoid overwhelming the server
-        std::thread::sleep(Duration::from_secs(1));
+        // Sleep for a short duration to avoid overloading the server
+        std::thread::sleep(Duration::from_millis(1000));
     }
-
-    // Close client
-    client.close();
-
-    // Avoid immediate exit
-    print!("Press ENTER to exit...");
-    io::stdout().flush().unwrap();
-    io::stdin().read_line(&mut String::new()).unwrap();
 }
